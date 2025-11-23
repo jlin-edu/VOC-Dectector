@@ -23,12 +23,13 @@ ALARM_LOW = 0.25  # Turn off alarm below this VOC
 
 # CLOUD CONFIG
 IO_USERNAME = "jlin7269"
-IO_KEY = "SECRET_KEY"                    # THE KEY IS NOT PUT HERE ONLINE
+IO_KEY = "KEY"
 CLOUD_INTERVAL = 15
 
 
 class AirQualityAI:
     def __init__(self):
+        self.smoothed_ohms = 0
         self.brain = {}
         self.load_brain()
         self.last_cloud_time = 0
@@ -143,12 +144,16 @@ class AirQualityAI:
         dt = temp - self.baseline_temp
         dh = hum - (self.baseline_ah * 5)
 
+        voc_weight = 50
+        
         best_name = "Unknown"
         min_dist = 999.0
 
         for name, sig in self.brain.items():
             dist = math.sqrt(
-                (dt - sig[0]) ** 2 + (dh - sig[1]) ** 2 + (voc - sig[2]) ** 2
+                (dt - sig[0]) ** 2 + 
+                (dh - sig[1]) ** 2 + 
+                ((voc - sig[2]) * voc_weight) ** 2
             )
             if dist < min_dist:
                 min_dist = dist
@@ -180,7 +185,14 @@ class AirQualityAI:
             return
 
         data = json.loads(resp)
-        raw_ohms = data["gas"]
+        raw_ohms_reading = data["gas"]
+
+        if self.smoothed_ohms == 0:
+            self.smoothed_ohms = raw_ohms_reading
+        else:
+            self.smoothed_ohms = (self.smoothed_ohms * 0.7) + (raw_ohms_reading * 0.3)
+        raw_ohms = self.smoothed_ohms
+      
         temp = data["temp"]
         hum = data["hum"]
         press = data["press"]
@@ -213,9 +225,10 @@ class AirQualityAI:
 
         self.update_baseline_drift(comp_ohms)
         voc = self.calculate_voc(comp_ohms)
+        z_score = self.get_z_score(voc)
         trend_arrow, pred_val = self.get_trend_and_update_history(voc)
         event, dist = self.classify(temp, hum, voc)
-        z_score = self.get_z_score(voc)
+        
 
         if voc > ALARM_HIGH:
             self.alarm_active = True
