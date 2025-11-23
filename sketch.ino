@@ -4,20 +4,67 @@
 #include <Adafruit_BME680.h>
 #include <Arduino_RouterBridge.h>
 #include <ArduinoJson.h> 
+#include <Arduino_LED_Matrix.h>
 
 Adafruit_BME680 bme;
+Arduino_LED_Matrix matrix;
+
+// 1. HAPPY FACE (Low VOC)
+uint8_t happy_face[104] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,0, 
+  0,0,0,0,1,0,0,0,1,0,0,0,0, 
+  0,0,0,0,1,0,0,0,1,0,0,0,0, 
+  0,0,1,0,0,0,1,0,0,0,1,0,0, 
+  0,0,1,0,0,0,1,0,0,0,1,0,0, 
+  0,0,0,1,1,0,0,0,1,1,0,0,0, 
+  0,0,0,0,0,1,1,1,0,0,0,0,0, 
+  0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
+
+// 2. NEUTRAL FACE (Marginal VOC)
+uint8_t neutral_face[104] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,0, 
+  0,0,0,0,1,0,0,0,1,0,0,0,0, 
+  0,0,0,0,1,0,0,0,1,0,0,0,0, 
+  0,0,0,0,0,0,1,0,0,0,0,0,0, 
+  0,0,0,0,0,0,1,0,0,0,0,0,0, 
+  0,0,0,0,0,0,0,0,0,0,0,0,0, 
+  0,0,1,1,1,1,1,1,1,1,1,0,0, 
+  0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
+// 3. DANGER / SKULL (Hazardous VOC)
+uint8_t danger_face[104] = {
+  0,0,0,0,1,1,1,0,0,0,0,0,0, 
+  0,0,0,1,0,0,0,1,0,0,0,0,0, 
+  0,0,1,0,1,0,1,0,1,0,0,0,0, 
+  0,0,1,0,0,0,0,0,1,0,0,0,0, 
+  0,0,1,0,1,1,1,0,1,0,0,0,0, 
+  0,0,0,1,0,0,0,1,0,0,0,0,0, 
+  0,0,0,0,1,1,1,0,0,0,0,0,0, 
+  0,0,0,0,0,1,0,0,0,0,0,0,0
+};
+
+// Python sends "0" (Happy), "1" (Neutral), "2" (Danger)
+void setMatrixFace(String command) {
+  int faceId = command.toInt();
+  
+  if (faceId == 0) {
+    matrix.draw(happy_face);
+  } else if (faceId == 1) {
+    matrix.draw(neutral_face);
+  } else {
+    matrix.draw(danger_face);
+  }
+}
 
 String getAllSensors() {
-  // Create a JSON document (256 bytes is sufficient for this data)
   StaticJsonDocument<256> doc;
-
-  // Populate the JSON with the latest readings
   doc["temp"] = bme.temperature;
   doc["hum"] = bme.humidity;
-  doc["press"] = bme.pressure / 100.0; // hPa
-  doc["gas"] = bme.gas_resistance;     // Ohms (Raw resistance)
-
-  // Serialize JSON to string to send back to Python
+  doc["press"] = bme.pressure / 100.0;
+  doc["gas"] = bme.gas_resistance;
   String output;
   serializeJson(doc, output);
   return output;
@@ -26,40 +73,33 @@ String getAllSensors() {
 void setup() {
   Serial.begin(115200);
   Wire.begin();
+  matrix.begin();
 
   if (!bme.begin()) {
     Serial.println("BME680 not found!");
     while (1);
   }
   
-  // Set up oversampling and filter initialization
+  // Sensor Settings
   bme.setTemperatureOversampling(BME680_OS_8X);
   bme.setHumidityOversampling(BME680_OS_2X);
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
-  
-  // HEATER PROFILE: 320*C for 150ms
-  // This is required for the gas resistance reading to work
   bme.setGasHeater(320, 150);
 
   Bridge.begin();
 
-  // Bind the C++ function to the key "getAll" so Python can call it
+  // Expose functions to Python
   Bridge.provide("getAll", getAllSensors);
+  Bridge.provide("setFace", setMatrixFace);
+  
+  // Start with Happy Face
+  matrix.draw(happy_face);
 }
 
 void loop() {
-  // Trigger a measurement
-  // This updates the internal bme.temperature, bme.gas_resistance.
   if (!bme.performReading()) {
-    Serial.println("Failed to perform reading :(");
     return;
-}
-  unsigned long endTime = bme.performReading();
-  
-  // If you read too fast, the sensor self-heats and throws off the calibration.
-  // A 2-second delay aligns with the typical VOC sampling rate.
+  }
   delay(2000); 
-  
-  // The Bridge library handles the RPC calls in the background interrupts
 }
