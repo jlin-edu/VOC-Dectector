@@ -93,7 +93,6 @@ void setup() {
   Bridge.provide("getAll", getAllSensors);
   Bridge.provide("setFace", setMatrixFace);
   
-  // Start with Happy Face
   matrix.draw(happy_face);
 }
 
