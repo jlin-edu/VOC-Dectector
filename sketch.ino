@@ -9,7 +9,7 @@
 Adafruit_BME680 bme;
 Arduino_LED_Matrix matrix;
 
-// 1. HAPPY FACE (Low VOC)
+// HAPPY FACE (Low VOC)
 uint8_t happy_face[104] = {
   0,0,0,0,0,0,0,0,0,0,0,0,0, 
   0,0,0,0,1,0,0,0,1,0,0,0,0, 
@@ -22,7 +22,7 @@ uint8_t happy_face[104] = {
 };
 
 
-// 2. NEUTRAL FACE (Marginal VOC)
+// NEUTRAL FACE (Marginal VOC)
 uint8_t neutral_face[104] = {
   0,0,0,0,0,0,0,0,0,0,0,0,0, 
   0,0,0,0,1,0,0,0,1,0,0,0,0, 
@@ -34,7 +34,7 @@ uint8_t neutral_face[104] = {
   0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
-// 3. DANGER / SKULL (Hazardous VOC)
+// DANGER / SKULL (Hazardous VOC)
 uint8_t danger_face[104] = {
   0,0,0,0,1,1,1,0,0,0,0,0,0, 
   0,0,0,1,0,0,0,1,0,0,0,0,0, 
