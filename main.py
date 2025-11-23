@@ -12,12 +12,12 @@ from datetime import datetime
 AI_BRAIN_FILE = "signature_file.json"
 LOG_FILE = "air_quality_log.csv"
 CALIBRATION_STEPS = 25
-MATCH_THRESHOLD = 2.5  # How strict the AI matching is
-HISTORY_SIZE = 20  # How many readings to keep for Trend Prediction
+MATCH_THRESHOLD = 2.5                  # How strict the AI matching is
+HISTORY_SIZE = 20                  # How many readings to keep for Trend Prediction
 # CLOUD CONFIG
 IO_USERNAME = "jlin7269"
 IO_KEY = "KEY_HERE"                    # Not putting private key online since its private
-CLOUD_INTERVAL = 15  # Data every 15 seconds
+CLOUD_INTERVAL = 15                    # Data every 15 seconds
 
 
 class AirQualityAI:
