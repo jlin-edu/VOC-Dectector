@@ -23,7 +23,7 @@ ALARM_LOW = 0.25  # Turn off alarm below this VOC
 
 # CLOUD CONFIG
 IO_USERNAME = "jlin7269"
-IO_KEY = "KEY"
+IO_KEY = "KEY"         # Ommitting key since its public github
 CLOUD_INTERVAL = 15
 
 
