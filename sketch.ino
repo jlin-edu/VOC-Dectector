@@ -100,5 +100,5 @@ void loop() {
   if (!bme.performReading()) {
     return;
   }
-  delay(2000); 
+  delay(500); 
 }
