@@ -1,3 +1,4 @@
+Timestamp,Temp(C),Hum(%),Press(hPa),Ohms,TVOC,Status
 2025-11-24 01:37:20,20.24527,65.163,0.1,Normal Air,FLAT
 2025-11-24 01:37:21,20.24091,64.83063,0.1,Normal Air,FLAT
 2025-11-24 01:37:22,20.2275,64.18004,0.1,Normal Air,FLAT
