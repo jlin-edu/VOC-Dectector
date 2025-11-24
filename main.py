@@ -23,7 +23,7 @@ ALARM_LOW = 0.25  # Turn off alarm below this VOC
 
 # CLOUD CONFIG
 IO_USERNAME = "jlin7269"
-IO_KEY = "KEY"         # Ommitting key since its public github
+IO_KEY = "KEY"        # Omitting out key (github public)
 CLOUD_INTERVAL = 15
 
 
@@ -36,7 +36,8 @@ class AirQualityAI:
         self.calibrated = False
         self.cal_buffer = []
         self.baseline_ohms = None
-        self.baseline_temp = 0
+        self.baseline_temp = 0  
+        self.baseline_hum = 0
         self.baseline_ah = 0
 
         self.voc_history = []  # For Trend & Z-Score
@@ -142,9 +143,9 @@ class AirQualityAI:
 
     def classify(self, temp, hum, voc):
         dt = temp - self.baseline_temp
-        dh = hum - (self.baseline_ah * 5)
+        dh = hum - self.baseline_hum
 
-        voc_weight = 50
+        voc_weight = 100
         
         best_name = "Unknown"
         min_dist = 999.0
@@ -172,9 +173,9 @@ class AirQualityAI:
         predicted_val = current_voc + (slope * 30)
 
         direction = "FLAT"
-        if slope > 0.005:
+        if slope > 0.001:
             direction = "RISING"
-        elif slope < -0.005:
+        elif slope < -0.001:
             direction = "FALLING"
 
         return direction, predicted_val
@@ -210,12 +211,16 @@ class AirQualityAI:
                 self.t_acc = []
             if not hasattr(self, "ah_acc"):
                 self.ah_acc = []
+            if not hasattr(self, "h_acc"):
+                self.h_acc = []
             self.t_acc.append(temp)
             self.ah_acc.append(current_ah)
+            self.h_acc.append(hum)
 
             if len(self.cal_buffer) >= CALIBRATION_STEPS:
                 self.baseline_ohms = sum(self.cal_buffer) / len(self.cal_buffer)
                 self.baseline_temp = sum(self.t_acc) / len(self.t_acc)
+                self.baseline_hum = sum(self.h_acc) / len(self.h_acc)
                 self.baseline_ah = sum(self.ah_acc) / len(self.ah_acc)
                 self.calibrated = True
                 print(
@@ -236,14 +241,14 @@ class AirQualityAI:
             self.alarm_active = False
 
         face_cmd = "0"
-        status_msg = f"Clean (Pred: {pred_val:.2f})"
+        status_msg = f"Clean (Pred: {pred_val:.2f}, Trend:{trend_arrow})"
 
         if self.alarm_active:
             face_cmd = "2"
-            status_msg = f"DANGER: {event} (VOC {voc:.2f})"
+            status_msg = f"DANGER: {event} (VOC {voc:.2f} Pred: {pred_val:.2f}, Trend:{trend_arrow})"
         elif abs(z_score) > 3.0:
             face_cmd = "1"
-            status_msg = f"Anomaly Detected! (Z-Score: {z_score:.1f})"
+            status_msg = f"Anomaly Detected! (Z-Score: {z_score:.1f} Pred: {pred_val:.2f}, Trend:{trend_arrow})"
         elif voc > 0.3:
             status_msg = f"Air Quality Degrading..."
 
